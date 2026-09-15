@@ -1,45 +1,22 @@
 # CMO Coagulopatías Congénitas
 
-Repositorio para la futura herramienta de soporte a la decisión basada en la
-**«Adaptación del Modelo de Atención Farmacéutica CMO al paciente con
-coagulopatías congénitas»**.
+Aplicación clínica estática para estratificar y planificar la atención farmacéutica de personas adultas con hemofilia A, hemofilia B o enfermedad de von Willebrand.
 
-## Estado del proyecto
+## Desarrollo
 
-La implementación clínica está **bloqueada de forma intencionada** hasta que el
-documento clínico de referencia se incorpore al repositorio. En el estado actual
-del entorno no se ha localizado dicho documento y el repositorio no contiene
-código de una aplicación previa.
+```bash
+npm install
+npm test
+npm run dev
+npm run build
+```
 
-No se han transcrito variables, puntuaciones, reglas ni intervenciones desde el
-resumen de requisitos: hacerlo convertiría una fuente secundaria e incompleta en
-la fuente de verdad y podría introducir discrepancias clínicas.
+El modelo y sus puntuaciones viven exclusivamente en `src/data/stratificationModel.ts`; las intervenciones acumulativas, en `src/data/interventions.ts`. La aplicación no envía datos a servidores ni los persiste automáticamente. La exportación/importación JSON es explícita y usa `schemaVersion`.
 
-## Fuente clínica requerida
+## GitHub Pages
 
-Antes de desarrollar la aplicación, añada una copia autorizada del documento de
-referencia (PDF o DOCX) en `docs/clinical-source/`. Si la licencia impide
-versionarlo, facilite el archivo en el entorno de trabajo y documente su versión,
-fecha y huella SHA-256.
+Vite utiliza la base `/cmocoagulopatias/`. El workflow `.github/workflows/deploy.yml` ejecuta tests y build antes de publicar `dist` mediante GitHub Pages. En la configuración del repositorio debe seleccionarse **GitHub Actions** como fuente de Pages.
 
-La auditoría previa a la implementación se describe en
-[`docs/CLINICAL_SOURCE_GATE.md`](docs/CLINICAL_SOURCE_GATE.md).
+URL prevista: <https://ramonmorillo.github.io/cmocoagulopatias/>
 
-## Principios de seguridad acordados
-
-- La fuente clínica primaria prevalece sobre el resumen funcional.
-- Una ausencia de evidencia en la HCE nunca equivale a una respuesta negativa.
-- Ninguna propuesta automatizada entra en el cálculo sin confirmación profesional.
-- El producto no solicitará identificadores personales innecesarios; utilizará un
-  identificador pseudonimizado.
-- La aplicación deberá funcionar en modo manual y sin enviar información clínica
-  a servicios externos.
-- Las reglas clínicas, variables, intervenciones y periodicidades tendrán una sola
-  fuente de verdad versionada y verificable mediante pruebas.
-
-## Próximo paso
-
-Incorporar o facilitar el documento clínico completo. Una vez disponible se podrá
-cerrar la matriz de trazabilidad, escoger el stack mínimo compatible con GitHub
-Pages e implementar la aplicación y sus pruebas sin hacer suposiciones clínicas.
-
+> Herramienta de apoyo profesional. La decisión clínica corresponde al profesional sanitario.
