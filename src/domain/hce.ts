@@ -15,7 +15,7 @@ const sentences=(text:string)=>text.replace(/\r/g,' ').split(/(?<=[.!?])\s+|\n+/
 
 function firstSentence(parts:string[],pattern:RegExp){return parts.find(s=>pattern.test(s));}
 function add(out:Suggestion[],applicable:Set<string>,s:Suggestion){
-  const isMulti=s.variableId==='lifestyle';
+  const isMulti=s.variableId==='lifestyle'||s.variableId==='comorbidities_joint';
   if(applicable.has(s.variableId)&&!out.some(x=>x.variableId===s.variableId&&(!isMulti||x.value===s.value)))out.push(s);
 }
 
@@ -23,11 +23,11 @@ function add(out:Suggestion[],applicable:Set<string>,s:Suggestion){
 export function analyzeClinicalText(text:string,pathology?:Pathology):Suggestion[]{
   if(!text.trim())return[];
   const parts=sentences(text),out:Suggestion[]=[];
-  const applicable=new Set(applicableVariables(pathology).map(v=>v.id));
+  const applicable=new Set([...applicableVariables(pathology).map(v=>v.id),'advanced_therapy']);
   const suggest=(variableId:string,value:string,evidence:string,confidence:Suggestion['confidence']='explicit')=>add(out,applicable,{variableId,value,evidence,confidence});
 
   const age=firstSentence(parts,/\b(?:paciente\s+de\s+)?(\d{1,3})\s*a[nñ]os\b/i)?.match(/\b(?:paciente\s+de\s+)?(\d{1,3})\s*a[nñ]os\b/i);
-  if(age){const years=Number(age[1]);if(years<=120)suggest('age',years<18?'minor':years<=50?'18-50':'over50',age[0]);}
+  if(age){const years=Number(age[1]);if(years>=18&&years<=120)suggest('age',years<=50?'18-50':'over50',age[0]);}
   const bmi=firstSentence(parts,/\bIMC\s*(?:de|:|=)?\s*\d{2}(?:[.,]\d+)?/i)?.match(/\bIMC\s*(?:de|:|=)?\s*(\d{2}(?:[.,]\d+)?)/i);
   if(bmi)suggest('obesity',Number(bmi[1].replace(',','.'))>=30?'yes':'no',bmi[0]);
 
@@ -46,11 +46,11 @@ export function analyzeClinicalText(text:string,pathology?:Pathology):Suggestion
     {variableId:'pain',value:'chronic',pattern:/dolor[^.]{0,50}(?:persistente|cr[oó]nico)|(?:persistente|cr[oó]nico)[^.]{0,50}dolor/i,confidence:'explicit'},
     {variableId:'pain',value:'mild',pattern:/dolor[^.]{0,25}(?:leve|moderad[oa])/i,confidence:'explicit'},
     {variableId:'joint_health',value:'yes',pattern:/artropat[ií]a|contractura|pr[oó]tesis[^.]{0,35}(?:articular|rodilla|cadera)|deformidad|discapacidad\s+articular/i,confidence:'explicit'},
-    {variableId:'degenerative_joint',value:'yes',pattern:/artrosis|osteoartritis|patolog[ií]a\s+articular\s+degenerativa/i,confidence:'explicit'},
+    {variableId:'comorbidities_joint',value:'degenerative_joint',pattern:/artropat[ií]a\s+degenerativa|artrosis|osteoartritis|patolog[ií]a\s+articular\s+degenerativa/i,confidence:'explicit'},
     {variableId:'bleed_severity',value:'hospital',pattern:/(?:requiere|required[oa]|precisa)[^.]{0,25}ingreso\s+hospitalario|hospitalizad[oa]\s+por\s+(?:hemorragia|sangrado)/i,confidence:'explicit'},
     {variableId:'bleed_severity',value:'outpatient',pattern:/(?:hemorragia|sangrado|hemartrosis)[^.]{0,80}(?:manejo|tratamiento)\s+(?:ambulatorio|en\s+(?:el\s+)?domicilio)|(?:manejo|tratamiento)\s+(?:ambulatorio|en\s+(?:el\s+)?domicilio)[^.]{0,80}(?:hemorragia|sangrado|hemartrosis)/i,confidence:'explicit'},
     {variableId:'bleeds',value:'yes',pattern:/\b(?:3|[4-9]|\d{2,})\s+(?:hemartrosis|hemorragias|sangrados)[^.]{0,60}(?:espont[aá]ne[oa]s?|(?:[uú]ltimo|pasado)\s+a[nñ]o|anuales)/i,confidence:'explicit'},
-    {variableId:'comorbidities',value:'yes',pattern:/\b(?:VIH|VHC|c[aá]ncer|ictus|diabetes|osteoporosis|insuficiencia\s+renal|hipertensi[oó]n\s+arterial)\b/i,confidence:'explicit'},
+    {variableId:'comorbidities_joint',value:'comorbidities',pattern:/\b(?:VIH|VHC|c[aá]ncer|ictus|diabetes|osteoporosis|insuficiencia\s+renal|hipertensi[oó]n\s+arterial)\b/i,confidence:'explicit'},
     {variableId:'route',value:'both',pattern:/subcut[aá]nea[^.]{0,60}intravenos[oa]|intravenos[oa][^.]{0,60}subcut[aá]nea/i,confidence:'explicit'},
     {variableId:'route',value:'iv',pattern:/\b(?:v[ií]a\s+)?intravenos[oa]\b|\bv[ií]a\s+IV\b/i,confidence:'explicit'},
     {variableId:'route',value:'other',pattern:/\b(?:v[ií]a\s+)?(?:oral|intramuscular)\b/i,confidence:'explicit'},

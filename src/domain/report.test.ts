@@ -85,12 +85,14 @@ describe('informe clínico', () => {
     expect(text).toContain(visualProps.data.variables[0].response);
   });
 
-  it('indica que el modelo adulto no aplica a un paciente pediátrico', () => {
-    const value = evaluation();
-    value.answers.age = 'minor';
-    const data = buildReportData(value);
-    expect(data.stratification.pediatric).toBe(true);
-    expect(data.stratification.finalPriority).toBe('Modelo adulto no aplicable');
-    expect(reportDataToText(data)).toContain('Modelo adulto no aplicable');
+
+
+  it('refleja la variable combinada, calidad de vida social y terapia avanzada como regla', () => {
+    const value=evaluation(); value.answers={...value.answers,comorbidities_joint:['comorbidities','degenerative_joint'],quality_life:'yes',advanced_therapy:'yes'};
+    const data=buildReportData(value); expect(data.stratification.dimensions.social).toBe(1); expect(data.stratification.specialRule).toContain('Prioridad 1'); expect(data.variables.map(v=>v.id)).toContain('comorbidities_joint'); expect(data.variables.map(v=>v.id)).not.toContain('advanced_therapy');
+  });
+
+  it('sin selección manual no incorpora recomendaciones al informe',()=>{
+    const text=reportDataToText(buildReportData(evaluation())); expect(text).toContain('Sin intervenciones seleccionadas.'); expect(text).not.toContain(INTERVENTIONS[0].text);
   });
 });
