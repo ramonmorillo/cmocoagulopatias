@@ -33,7 +33,6 @@ export type ReportData = {
     finalPriority: string;
     specialRule?: string;
     professionalOverride?: string;
-    pediatric: boolean;
   };
   variables: ReportVariable[];
   interventions: Record<Category, ReportIntervention[]>;
@@ -94,12 +93,9 @@ export function buildReportData(evaluation: Evaluation): ReportData {
     result.final === evaluation.professional.priority
       ? `Prioridad ${evaluation.professional.priority}: ${evaluation.professional.reason.trim()}`
       : undefined;
-  const specialRule =
-    evaluation.answers.age === 'minor'
-      ? result.reason
-      : evaluation.answers.advanced_therapy === 'yes'
-        ? 'Tratamiento con terapia génica/terapia avanzada: Prioridad 1.'
-        : undefined;
+  const specialRule = evaluation.answers.advanced_therapy === 'yes'
+    ? 'Tratamiento con terapia génica/terapia avanzada: Prioridad 1.'
+    : undefined;
 
   return {
     heading: 'CMO Coagulopatías Congénitas',
@@ -124,13 +120,10 @@ export function buildReportData(evaluation: Evaluation): ReportData {
     stratification: {
       score: result.score,
       dimensions,
-      priorityByScore: result.byScore ? `Prioridad ${result.byScore}` : 'No aplicable',
-      finalPriority: result.final
-        ? `Prioridad ${result.final}`
-        : 'Modelo adulto no aplicable',
+      priorityByScore: `Prioridad ${result.byScore}`,
+      finalPriority: `Prioridad ${result.final}`,
       specialRule,
       professionalOverride,
-      pediatric: result.pediatric,
     },
     variables: applicableVariables(evaluation.general.pathology).map((variable) => {
       const answer = evaluation.answers[variable.id];

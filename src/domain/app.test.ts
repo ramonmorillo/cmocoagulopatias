@@ -1,9 +1,10 @@
 import {describe,expect,it} from 'vitest';
-import {applyMandatoryRules,calculateScore,determineFinalPriority,determinePriorityByScore} from './scoring';
+import {applyMandatoryRules,calculateDimensionScores,calculateScore,determineFinalPriority,determinePriorityByScore,pointsFor} from './scoring';
 import {analyzeClinicalText} from './hce';
-import {createEmptyEvaluation,resetEvaluation} from './evaluation';
+import {createEmptyEvaluation,isValidEvaluation,migrateEvaluation,resetEvaluation} from './evaluation';
 import {generateReport} from './report';
-import {applicableVariables} from '../data/stratificationModel';
+import {applicableVariables,MODEL} from '../data/stratificationModel';
+import {retainValidInterventions,recommendedInterventions} from '../data/interventions';
 
 const value=(text:string,id:string)=>analyzeClinicalText(text,'ha').find(x=>x.variableId===id)?.value;
 
@@ -17,7 +18,6 @@ describe('reglas clínicas',()=>{
     expect(mandatory.priority??determinePriorityByScore(score)).toBe(priority);
   });
   it('terapia avanzada confirmada obliga P1',()=>expect(determineFinalPriority({age:'18-50',advanced_therapy:'yes'},'ha').final).toBe(1));
-  it('menor deriva a modelo pediátrico',()=>expect(applyMandatoryRules({age:'minor'}).pediatric).toBe(true));
   it('criterio profesional solo eleva P3 a P2',()=>expect(determineFinalPriority({age:'18-50'},'ha',{enabled:true,priority:2,reason:'Complejidad'}).final).toBe(2));
   it('criterio profesional no reduce P1',()=>expect(determineFinalPriority({advanced_therapy:'yes'},'ha',{enabled:true,priority:2,reason:'No reducir'}).final).toBe(1));
   it('cambiar respuesta actualiza score',()=>expect(calculateScore({age:'over50'},'ha')).toBeGreaterThan(calculateScore({age:'18-50'},'ha')));
@@ -50,10 +50,11 @@ No se dispone en la historia clínica de información reciente sobre calidad de 
   const get=(id:string)=>suggestions.find(s=>s.variableId===id)?.value;
   it.each([
     ['age','over50'],['obesity','yes'],['inhibitors','no'],['pain','chronic'],['joint_health','yes'],
-    ['bleed_severity','outpatient'],['hemophilia_severity','severe'],['bleeds','yes'],['comorbidities','yes'],
+    ['bleed_severity','outpatient'],['hemophilia_severity','severe'],['bleeds','yes'],
     ['psychological','yes'],['advanced_therapy','no'],['route','iv'],['regimen_changes','dose'],
     ['home_delivery','yes'],['prophylaxis','yes'],['nonadherence','yes'],['access','yes'],['knowledge','yes'],
   ])('extrae %s = %s',(id,expected)=>expect(get(id)).toBe(expected));
+  it('extrae comorbilidad en la variable combinada',()=>expect(suggestions).toContainEqual(expect.objectContaining({variableId:'comorbidities_joint',value:'comorbidities'})));
   it('extrae riesgo cardiovascular como estilo de vida',()=>expect(suggestions).toContainEqual(expect.objectContaining({variableId:'lifestyle',value:'cv_risk'})));
   it('no genera terapia avanzada positiva',()=>expect(suggestions).not.toContainEqual(expect.objectContaining({variableId:'advanced_therapy',value:'yes'})));
   it('no inventa calidad de vida ante ausencia de información',()=>expect(get('quality_life')).toBeUndefined());
@@ -69,4 +70,24 @@ describe('seguridad del estado',()=>{
 describe('variables condicionales',()=>{
   it('hemofilia no muestra EVW',()=>{const ids=applicableVariables('ha').map(x=>x.id);expect(ids).toContain('hemophilia_severity');expect(ids).not.toContain('vw_severity')});
   it('EVW no muestra gravedad hemofilia',()=>{const ids=applicableVariables('vw').map(x=>x.id);expect(ids).toContain('vw_severity');expect(ids).not.toContain('hemophilia_severity')});
+});
+
+
+describe('modelo adulto y variables agrupadas',()=>{
+  it('edad conserva únicamente las dos opciones adultas y sus puntos',()=>{const age=MODEL.find(v=>v.id==='age')!;expect(age.options.map(o=>[o.value,o.points])).toEqual([['18-50',1],['over50',2]]);expect(age.options.some(o=>o.value==='minor')).toBe(false)});
+  it('calidad de vida puntúa en la dimensión sociosanitaria',()=>{expect(calculateDimensionScores({quality_life:'yes'},'ha').social).toBe(1);expect(calculateDimensionScores({quality_life:'yes'},'ha').clinical).toBe(0)});
+  it.each([[['comorbidities'],1],[['degenerative_joint'],2],[['comorbidities','degenerative_joint'],3]] as const)('comorbilidades/artropatía %j → %i puntos',(answer,score)=>expect(pointsFor('comorbidities_joint',[...answer])).toBe(score));
+  it('terapia avanzada no añade puntos pero obliga P1',()=>{expect(calculateScore({advanced_therapy:'yes'},'ha')).toBe(0);expect(determineFinalPriority({advanced_therapy:'yes'},'ha').final).toBe(1)});
+  it('sin terapia avanzada, 10 puntos mantienen P3',()=>expect(applyMandatoryRules({advanced_therapy:'no'}).priority??determinePriorityByScore(10)).toBe(3));
+  it('la puntuación máxima combinada conserva los tres puntos',()=>expect(pointsFor('comorbidities_joint',['comorbidities','degenerative_joint'])).toBe(3));
+});
+
+describe('selección manual de intervenciones',()=>{
+  it('calcular P3 no selecciona intervenciones',()=>{const e=createEmptyEvaluation();determineFinalPriority(e.answers,'ha');expect(e.selectedInterventions).toEqual([])});
+  it('cambiar P3 a P2 no selecciona automáticamente',()=>{const e=createEmptyEvaluation();e.selectedInterventions=retainValidInterventions(e.selectedInterventions,2);expect(e.selectedInterventions).toEqual([])});
+  it('un cambio de prioridad solo conserva selecciones todavía válidas',()=>{const p3=recommendedInterventions(3)[0].id;const p2=recommendedInterventions(2).find(i=>i.priority===2)!.id;expect(retainValidInterventions([p3,p2],3)).toEqual([p3])});
+});
+
+describe('compatibilidad de evaluaciones',()=>{
+  it('migra comorbilidades y artropatía del esquema 1',()=>{const old={...createEmptyEvaluation(),schemaVersion:1,answers:{comorbidities:'yes',degenerative_joint:'yes'},sources:{comorbidities:'Manual',degenerative_joint:'Manual'}};const migrated=migrateEvaluation(old);expect(isValidEvaluation(migrated)).toBe(true);expect((migrated as ReturnType<typeof createEmptyEvaluation>).answers.comorbidities_joint).toEqual(['comorbidities','degenerative_joint'])});
 });

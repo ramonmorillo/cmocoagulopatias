@@ -13,4 +13,5 @@ export const INTERVENTIONS:Intervention[]=[
  ...add(1,'Coordinación con el equipo asistencial',['Establecer vías rápidas de comunicación entre niveles asistenciales.','Coordinar específicamente con urgencias.'])
 ];
 export const recommendedInterventions=(priority:Priority)=>INTERVENTIONS.filter(i=>i.priority>=priority);
+export const retainValidInterventions=(selected:string[],priority:Priority)=>{const valid=new Set(recommendedInterventions(priority).map(i=>i.id));return selected.filter(id=>valid.has(id))};
 export const PERIODICITY:Record<Priority,string>={1:'Cada mes',2:'Cada 6 meses',3:'Cada 12 meses'};
