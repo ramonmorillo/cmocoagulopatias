@@ -1,6 +1,6 @@
 import {applicableVariables,DIMENSIONS,MODEL,Pathology,PRIORITY_CUTS,Dimension} from '../data/stratificationModel';
 export type AnswerValue=string|string[]; export type Answers=Record<string,AnswerValue|undefined>;
-export type Priority=1|2|3; export type Source='HCE'|'Entrevista al paciente'|'Manual'|'Sugerencia automatizada confirmada';
+export type Priority=1|2|3; export type Source='Entrevista al paciente'|'Manual'|'Sugerencia HCE confirmada';
 export function pointsFor(id:string,value:AnswerValue|undefined){const v=MODEL.find(x=>x.id===id);if(!v||value===undefined)return 0;const values=Array.isArray(value)?value:[value];return values.reduce((n,x)=>n+(v.options.find(o=>o.value===x)?.points??0),0)}
 export function calculateScore(answers:Answers,pathology?:Pathology){return applicableVariables(pathology).reduce((n,v)=>n+pointsFor(v.id,answers[v.id]),0)}
 export function calculateDimensionScores(answers:Answers,pathology?:Pathology){return (Object.keys(DIMENSIONS) as Dimension[]).reduce((a,d)=>({...a,[d]:applicableVariables(pathology).filter(v=>v.dimension===d).reduce((n,v)=>n+pointsFor(v.id,answers[v.id]),0)}),{} as Record<Dimension,number>)}
