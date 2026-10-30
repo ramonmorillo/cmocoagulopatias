@@ -28,11 +28,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      # Keep npm install until package-lock.json can be generated and committed.
-      # setup-node's npm cache cannot be enabled safely without a lockfile.
+      # Instalación reproducible: versiones exactas de package.json y package-lock.json.
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run tests
         run: npm test
