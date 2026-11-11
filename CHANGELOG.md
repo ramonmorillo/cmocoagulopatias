@@ -1,8 +1,8 @@
 # Changelog
 
-## Sin publicar — Flujo común CMO (CMO Design System 0.3.0)
+## 1.2.0 — 2026-11-11 — Flujo común CMO (CMO Design System 0.3.0)
 
-Sin cambios en el modelo clínico: `scoring.ts`, `stratificationModel.ts`, `interventions.ts` y `hce.ts` intactos (huella SHA-256 en `tests/fixtures/clinical-files.sha256.json`). Versión y fecha de publicación sin tocar (las fija el autor en el commit de publicación).
+Sin cambios en el modelo clínico: `scoring.ts`, `stratificationModel.ts`, `interventions.ts` y `hce.ts` intactos (huella SHA-256 en `tests/fixtures/clinical-files.sha256.json`). Publicación: `package.json`, `package-lock.json` y `cmo-app-meta` 1.1.0 → 1.2.0; `releaseDate: "2026-11-11"`.
 - Núcleo CMO fijado en `src/cmo-ds/` (informe, PDF, flujo) y adaptador `src/domain/assessment.ts` (sin lógica clínica; declaraciones de tipos `*.d.ts` junto al núcleo).
 - **Resultado provisional**: variables sin responder (o regla de terapia avanzada / patología sin seleccionar) no puntúan ni se interpretan como «No»; el resultado se marca provisional con cota superior calculada con el propio motor. La variable adicional «calidad de vida» sigue siendo opcional.
 - **Elevación por criterio profesional** con motivo de al menos 12 caracteres (antes bastaba cualquier texto); la prioridad por puntuación se conserva y consta en el informe.
