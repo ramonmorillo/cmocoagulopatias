@@ -1,0 +1,6 @@
+{
+  "src/domain/scoring.ts": "3eb41ca193673cc36c924accfb1d0f8b8a3363bd82e008d421986b0f2474bb92",
+  "src/data/stratificationModel.ts": "a246279545213624a5518d499ec282a59a05a3966d13e79b9401c65c9c2b25e7",
+  "src/data/interventions.ts": "f1b5ef643e9a775a1254bc166c235a3bdc77b0757674147bfa971200404c52dc",
+  "src/domain/hce.ts": "5cc5b2d38110856e50a091f28c45fb53430d574d99a2fc3130d26a71b0799fca"
+}

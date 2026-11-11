@@ -50,3 +50,11 @@ footer small { color: var(--cmo-ink-muted); }
 .cmo-app-footer { max-width: 1180px; margin: 0 auto; padding: 0 1rem var(--cmo-space-7); font-size: var(--cmo-text-sm); color: var(--cmo-ink-muted); }
 .cmo-app-footer a { color: var(--cmo-brand-strong); }
 @media print { .brand > div:last-child::before, .cmo-app-footer { display: none; } }
+
+/* Flujo común CMO: resultado provisional, informe en pantalla y ajustes de ancho móvil. */
+@layer cmo.app {
+  .provisional { border-left: 4px solid #8a5a00; }
+  .interventions label, .custom { flex-wrap: wrap; }
+  .interventions select, .custom select { max-width: 100%; }
+  .clinical-report, .report-shell, .card { min-width: 0; overflow-wrap: anywhere; }
+}
